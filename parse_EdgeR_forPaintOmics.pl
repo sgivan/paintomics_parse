@@ -97,21 +97,24 @@ for my $inline (<$in>) {
     chomp($inline);
     my @linevals = split /\t/, $inline;
 #    say $out $linevals[5] . "\t" . $linevals[1] if ($linevals[5] =~ /ENSMUS/);
+    my $data = [$linevals[1], $linevals[4],$linevals[16]];
     if ($linevals[5] =~ /ENSMUS/) {
         if (exists($ensemblIDs{$linevals[5]})) {
             if ($linevals[4] < $sig_q && ($linevals[4] < $ensemblIDs{$linevals[5]}->[1])) {
                 # if FDR of incoming data < what's already stored in hash
-                #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]] if ($linevals[4] < $ensemblIDs{$linevals[5]}->[1]);
-                $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
+                #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
+                $ensemblIDs{$linevals[5]} = $data;
             } elsif ($linevals[4] > $sig_q && $ensemblIDs{$linevals[5]}->[1] > $sig_q) {
                 # when FDR is > sig_q, usually 0.05, this gene is not differentially expressed
                 # so, save the data with the lowest tagwise.dispersion
                 if ($linevals[16] < $ensemblIDs{$linevals[5]}->[2]) {
-                    $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+                    #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+                    $ensemblIDs{$linevals[5]} = $data;
                 }
             }
         } else {
-            $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+            #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+            $ensemblIDs{$linevals[5]} = $data;
         }
     }
 
