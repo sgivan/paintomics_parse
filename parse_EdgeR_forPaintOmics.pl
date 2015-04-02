@@ -77,6 +77,13 @@ open(my $sigs, ">", "$outfile" . "_sigID.txt");
 #c100006_g1_i1	0.124082247649993	1.90383223800325	0.805873267935035	1	ENSMUSG00000031604	224	135	100	156	171	81	161	153	146	102	0.285484765761154
 #c100014_g1_i1	-2.29464848758662	-2.95486182924322	0.00218562527095768	0.267105253387657	ENSMUSG00000020682	4	5	6	6	7	0	0	2	2	0	0.23266991972961
 #
+# index of relevent fields:
+# 1 logFC
+# 2 locCPM
+# 4 FDR
+# 5 Ensembl ID
+# 16 tagwise.dispersion 
+#
 
 #
 # instantiate a hash to hold the values that will be printed
@@ -92,15 +99,29 @@ for my $inline (<$in>) {
 #    say $out $linevals[5] . "\t" . $linevals[1] if ($linevals[5] =~ /ENSMUS/);
     if ($linevals[5] =~ /ENSMUS/) {
         if (exists($ensemblIDs{$linevals[5]})) {
-            $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4]] if ($linevals[4] < $ensemblIDs{$linevals[5]}->[1]);
+            if ($linevals[4] < $sig_q && ($linevals[4] < $ensemblIDs{$linevals[5]}->[1])) {
+                # if FDR of incoming data < what's already stored in hash
+                #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]] if ($linevals[4] < $ensemblIDs{$linevals[5]}->[1]);
+                $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
+            } elsif ($linevals[4] > $sig_q && $ensemblIDs{$linevals[5]}->[1] > $sig_q) {
+                # when FDR is > sig_q, usually 0.05, this gene is not differentially expressed
+                # so, save the data with the lowest tagwise.dispersion
+                if ($linevals[16] < $ensemblIDs{$linevals[5]}->[2]) {
+                    $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+                }
+            }
         } else {
-            $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4]];
+            $ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
         }
     }
 
 }
 
-for my $id (keys(%ensemblIDs)) {
+#
+# print output
+#
+
+for my $id (sort keys(%ensemblIDs)) {
     if ($qvalue) {
         say $out $id . "\t" .  $ensemblIDs{$id}->[0] . "\t" . $ensemblIDs{$id}->[1];
     } else {
