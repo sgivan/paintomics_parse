@@ -51,6 +51,14 @@ sub help {
 
 say <<HELP;
 
+    "infile:s"
+    "outfile:s"
+    "sig_q:f" minimum Q-value to be significant - default = 0.05
+    "qvalue" print Q-value in output
+    "nobest" don't pick best data for each gene
+    "debug"
+    "verbose"
+    "help"
 
 HELP
 
