@@ -133,8 +133,9 @@ for my $inline (<$in>) {
 #
 # print output
 #
-
-for my $id (sort keys(%ensemblIDs)) {
+say $out "Gene_ID\tSample_1";# if you don't have this line, PaintOmics bugs out sometimes
+#for my $id (sort keys(%ensemblIDs)) {
+for my $id (keys(%ensemblIDs)) {
     if ($qvalue) {
         say $out $id . "\t" .  $ensemblIDs{$id}->[0] . "\t" . $ensemblIDs{$id}->[1];
     } else {
