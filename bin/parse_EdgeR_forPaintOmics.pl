@@ -89,7 +89,7 @@ open(my $sigs, ">", "$outfile" . "_sigID.txt");
 #
 # index of relevent fields:
 # 1 logFC
-# 2 locCPM
+# 2 logCPM
 # 4 FDR
 # 5 Ensembl ID
 # 16 tagwise.dispersion 
