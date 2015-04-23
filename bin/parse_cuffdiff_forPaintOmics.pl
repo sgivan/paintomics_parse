@@ -28,6 +28,9 @@ use autodie;
 use Getopt::Long; # use GetOptions function to for CL args
 use warnings;
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib/";
+use Paintomics::Parse;
 
 my ($debug,$verbose,$help,$infile,$outfile,$sig_q,$qvalue,$nobest);
 
