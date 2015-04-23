@@ -27,6 +27,14 @@ use Moose;
 has 'infile' => (
     is  =>  'rw',
     isa =>  'Str',
+    default =>  'infile',
+);
+
+has 'infile_fh'    =>  (
+    is  =>  'rw',
+    isa =>  'FileHandle',
+    lazy    =>  1,
+    builder =>  '_make_infile_FH',
 );
 
 has 'outfile' => (
@@ -36,8 +44,9 @@ has 'outfile' => (
 );
 
 has 'outfile_fh'    =>  (
-    is  =>  'ro',
-    isa =>  'Object',
+    is  =>  'rw',
+    isa =>  'FileHandle',
+    builder =>  '_make_outfile_FH',
 );
 
 has 'outfile_sigID' =>  (
@@ -47,8 +56,9 @@ has 'outfile_sigID' =>  (
 );
 
 has 'outfile_sigID_fh'  =>  (
-    is  =>  'ro',
-    isa =>  'Object',
+    is  =>  'rw',
+    isa =>  'FileHandle',
+    builder =>  '_make_outfile_sigID_FH',
 );
 
 has 'qvalue'    =>  (
@@ -59,7 +69,7 @@ has 'qvalue'    =>  (
 
 has 'sig_q' =>  (
     is  =>  'rw',
-    isa =>  'Float',
+    isa =>  'Num',
     default =>  0.05,
 );
 
@@ -77,7 +87,7 @@ sub output_files {
     say $outFH "Gene_ID\tSample_1";# if you don't have this line, PaintOmics bugs out sometimes
 
     for my $id (keys(%$hashref)) {
-        say "key: '$id'";
+        #say "key: '$id'";
         if ($self->qvalue()) {
             say $outFH $id . "\t" .  $hashref->{$id}->[0] . "\t" . $hashref->{$id}->[1];
         } else {
@@ -91,7 +101,15 @@ sub output_files {
 
 }
 
-sub _make_out_FH {
+sub _make_infile_FH {
+    my $self = shift;
+
+    open(my $fh, '<', $self->infile());
+    $self->infile_fh($fh);
+    return $fh;
+}
+
+sub _make_outfile_FH {
     my $self = shift;
 
     open(my $fh, '>', $self->outfile());
@@ -99,7 +117,7 @@ sub _make_out_FH {
     return $fh;
 }
 
-sub _make_sigs_FH {
+sub _make_outfile_sigID_FH {
     my $self = shift;
 
     open(my $fh, '>', $self->outfile_sigID());

@@ -67,20 +67,27 @@ HELP
 
 }
 
+my $PP = Paintomics::Parse->new();
+
 $infile ||= 'infile';
 $outfile ||= 'outfile';
 $sig_q ||= '0.05';
 
+$PP->infile($infile);
+$PP->outfile($outfile);
+$PP->outfile_sigID($outfile . "_sigID.txt");
+$PP->sig_q($sig_q);
+
 if ($debug) {
-    say "infile: '$infile'";
+    say "infile: '" . $PP->infile();
     say "outfile: '$outfile'";
     say "sig_q: '$sig_q'";
     exit();
 }
 
-open(my $in, "<", $infile);
-open(my $out, ">", $outfile);
-open(my $sigs, ">", "$outfile" . "_sigID.txt");
+#open(my $in, "<", $infile);
+#open(my $out, ">", $outfile);
+#open(my $sigs, ">", "$outfile" . "_sigID.txt");
 
 #
 # input file looks like this:
@@ -112,7 +119,9 @@ my $fdr = 12;
 my %ensemblIDs = ();
 
 my $cnt = 0;
-for my $inline (<$in>) {
+#$for my $inline (<$in>) {
+my $infile_fh = $PP->infile_fh();
+for my $inline (<$infile_fh>) {
 
     chomp($inline);
     next if (++$cnt == 1);
@@ -133,7 +142,7 @@ for my $inline (<$in>) {
 
     if ($linevals[$gene_id] =~ /ENS/) {
         my $ensemblID = $linevals[$gene_id];
-        say $ensemblID;
+        #say $ensemblID;
         unless ($nobest) {
             if (exists($ensemblIDs{$ensemblID})) {
                 say "ensemblIDs{$ensemblID} exists";
@@ -163,18 +172,19 @@ for my $inline (<$in>) {
 #
 # print output
 #
-say $out "Gene_ID\tSample_1";# if you don't have this line, PaintOmics bugs out sometimes
-#for my $id (sort keys(%ensemblIDs)) {
-for my $id (keys(%ensemblIDs)) {
-    say "key: '$id'";
-    if ($qvalue) {
-        say $out $id . "\t" .  $ensemblIDs{$id}->[0] . "\t" . $ensemblIDs{$id}->[1];
-    } else {
-        say $out $id . "\t" .  $ensemblIDs{$id}->[0];
-    }
+#say $out "Gene_ID\tSample_1";# if you don't have this line, PaintOmics bugs out sometimes
+#for my $id (keys(%ensemblIDs)) {
+#    say "key: '$id'";
+#    if ($qvalue) {
+#        say $out $id . "\t" .  $ensemblIDs{$id}->[0] . "\t" . $ensemblIDs{$id}->[1];
+#    } else {
+#        say $out $id . "\t" .  $ensemblIDs{$id}->[0];
+#    }
+#
+#    if ($ensemblIDs{$id}->[1] < $sig_q) {
+#        say $sigs $id;
+#    }
+#}
 
-    if ($ensemblIDs{$id}->[1] < $sig_q) {
-        say $sigs $id;
-    }
-}
+$PP->output_files(\%ensemblIDs);
 
