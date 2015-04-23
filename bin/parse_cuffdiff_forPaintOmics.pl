@@ -74,8 +74,8 @@ $outfile ||= 'outfile';
 $sig_q ||= '0.05';
 
 $PP->infile($infile);
-$PP->outfile($outfile);
-$PP->outfile_sigID($outfile . "_sigID.txt");
+#$PP->outfile($outfile);
+#$PP->outfile_sigID($outfile . "_sigID.txt");
 $PP->sig_q($sig_q);
 
 if ($debug) {
@@ -84,10 +84,6 @@ if ($debug) {
     say "sig_q: '$sig_q'";
     exit();
 }
-
-#open(my $in, "<", $infile);
-#open(my $out, ">", $outfile);
-#open(my $sigs, ">", "$outfile" . "_sigID.txt");
 
 #
 # input file looks like this:
@@ -119,72 +115,61 @@ my $fdr = 12;
 my %ensemblIDs = ();
 
 my $cnt = 0;
-#$for my $inline (<$in>) {
+my $sample_set_last = '';
 my $infile_fh = $PP->infile_fh();
 for my $inline (<$infile_fh>) {
 
     chomp($inline);
     next if (++$cnt == 1);
     my @linevals = split /\t/, $inline;
-#    for (my $i = 0; $i < scalar(@linevals); ++$i) {
-#        say $i . ":\t" . $linevals[$i];
-#    }
     $linevals[$log2ratio] =~ s/inf/0/;
-#    say "gene_ID = " . $linevals[$gene_id] . "\n",
-#        "sample_1 = " . $linevals[$sample_1] . "\n",
-#        "sample_2 = " . $linevals[$sample_2] . "\n",
-#        "log2ratio = " . $linevals[$log2ratio] . "\n",
-#        "fdr = " . $linevals[$fdr] . "\n", 
-#        ;
-    #last();
+    my $sample_set = $linevals[$sample_2] . "_vs_" . $linevals[$sample_1];
+    #say "sample set: '$sample_set'";
+    if ($sample_set_last && ($sample_set_last eq $sample_set)) {
 
-    my $data = [$linevals[$log2ratio], $linevals[$fdr]];
+        my $data = [$linevals[$log2ratio], $linevals[$fdr]];
 
-    if ($linevals[$gene_id] =~ /ENS/) {
-        my $ensemblID = $linevals[$gene_id];
-        #say $ensemblID;
-        unless ($nobest) {
-            if (exists($ensemblIDs{$ensemblID})) {
-                say "ensemblIDs{$ensemblID} exists";
-                if ($linevals[$fdr] < $sig_q && ($linevals[$fdr] < $ensemblIDs{$ensemblID}->[1])) {
-                    # if FDR of incoming data < what's already stored in hash
-                    #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
-                    $ensemblIDs{$ensemblID} = $data;
-                } elsif ($linevals[$fdr] > $sig_q && $ensemblIDs{$ensemblID}->[1] > $sig_q) {
-                    # when FDR is > sig_q, usually 0.05, this gene is not differentially expressed
-                    # so, save the data with the largest log2ratio
-                    if (abs($linevals[$log2ratio]) > $ensemblIDs{$ensemblID}->[2]) {
-                        #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
-                        $ensemblIDs{$linevals[5]} = $data;
+        if ($linevals[$gene_id] =~ /ENS/) {
+            my $ensemblID = $linevals[$gene_id];
+            #say $ensemblID;
+            unless ($nobest) {
+                if (exists($ensemblIDs{$ensemblID})) {
+                    say "ensemblIDs{$ensemblID} exists";
+                    if ($linevals[$fdr] < $sig_q && ($linevals[$fdr] < $ensemblIDs{$ensemblID}->[1])) {
+                        # if FDR of incoming data < what's already stored in hash
+                        #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
+                        $ensemblIDs{$ensemblID} = $data;
+                    } elsif ($linevals[$fdr] > $sig_q && $ensemblIDs{$ensemblID}->[1] > $sig_q) {
+                        # when FDR is > sig_q, usually 0.05, this gene is not differentially expressed
+                        # so, save the data with the largest log2ratio
+                        if (abs($linevals[$log2ratio]) > $ensemblIDs{$ensemblID}->[2]) {
+                            #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+                            $ensemblIDs{$linevals[5]} = $data;
+                        }
                     }
+                } else {
+                    #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
+                    $ensemblIDs{$ensemblID} = $data;
                 }
             } else {
-                #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
                 $ensemblIDs{$ensemblID} = $data;
             }
-        } else {
-            $ensemblIDs{$ensemblID} = $data;
         }
+    } elsif ($sample_set_last) {
+        $PP->outfile($outfile . "_" . $sample_set_last);
+        $PP->outfile_sigID($outfile . "_sigID_" . $sample_set_last);
+        $PP->output_files(\%ensemblIDs);
+        %ensemblIDs = ();
+        $sample_set_last = $sample_set;
+        redo;
+    } else {
+        $sample_set_last = $sample_set;
+        redo;
     }
-
 }
 
-#
-# print output
-#
-#say $out "Gene_ID\tSample_1";# if you don't have this line, PaintOmics bugs out sometimes
-#for my $id (keys(%ensemblIDs)) {
-#    say "key: '$id'";
-#    if ($qvalue) {
-#        say $out $id . "\t" .  $ensemblIDs{$id}->[0] . "\t" . $ensemblIDs{$id}->[1];
-#    } else {
-#        say $out $id . "\t" .  $ensemblIDs{$id}->[0];
-#    }
-#
-#    if ($ensemblIDs{$id}->[1] < $sig_q) {
-#        say $sigs $id;
-#    }
-#}
-
+$PP->outfile($outfile . "_" . $sample_set_last);
+#say "outputting last dataset to file: '" . $PP->outfile() . "'";
+$PP->outfile_sigID($outfile . "_sigID_" . $sample_set_last);
 $PP->output_files(\%ensemblIDs);
 

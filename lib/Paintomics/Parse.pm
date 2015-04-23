@@ -41,11 +41,13 @@ has 'outfile' => (
     is  =>  'rw',
     isa =>  'Str',
     default =>  'outfile.txt',
+    trigger =>  \&_set_outfile_fh,
 );
 
 has 'outfile_fh'    =>  (
     is  =>  'rw',
     isa =>  'FileHandle',
+    lazy    =>  1,
     builder =>  '_make_outfile_FH',
 );
 
@@ -53,11 +55,13 @@ has 'outfile_sigID' =>  (
     is  =>  'rw',
     isa =>  'Str',
     default =>  'outfile_sigID.txt',
+    trigger =>  \&_set_outfile_sigID_fh,
 );
 
 has 'outfile_sigID_fh'  =>  (
     is  =>  'rw',
     isa =>  'FileHandle',
+    lazy    =>  1,
     builder =>  '_make_outfile_sigID_FH',
 );
 
@@ -98,7 +102,8 @@ sub output_files {
             say $sigFH $id;
         }
     }
-
+#    $self->_closeFH($outFH);
+#    $self->_closeFH($sigFH);
 }
 
 sub _make_infile_FH {
@@ -112,6 +117,7 @@ sub _make_infile_FH {
 sub _make_outfile_FH {
     my $self = shift;
 
+    #say "creating output file '" . $self->outfile() . "'";
     open(my $fh, '>', $self->outfile());
     $self->outfile_fh($fh);
     return $fh;
@@ -125,6 +131,31 @@ sub _make_outfile_sigID_FH {
     return $fh;
 }
 
+sub _closeFH {
+    my ($self,$fh) = @_;
+
+    $fh->close();
+}
+
+sub _set_outfile_fh {
+    my ($self,$new) = @_;
+
+    $self->_closeFH($self->outfile_fh);
+
+    $self->_make_outfile_FH($new);
+
+}
+
+sub _set_outfile_sigID_fh {
+    my ($self,$new) = @_;
+
+    $self->_closeFH($self->outfile_sigID_fh);
+
+    $self->_make_outfile_sigID_FH($new);
+
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
+
 
