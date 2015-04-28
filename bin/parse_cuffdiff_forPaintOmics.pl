@@ -32,14 +32,15 @@ use FindBin;
 use lib "$FindBin::Bin/../lib/";
 use Paintomics::Parse;
 
-my ($debug,$verbose,$help,$infile,$outfile,$sig_q,$qvalue,$nobest);
+my ($debug,$verbose,$help,$infile,$outfile,$sig_q,$qvalue,$nobest,$genename);
 
 my $result = GetOptions(
     "infile:s"  =>  \$infile,
     "outfile:s" =>  \$outfile,
     "sig_q:f"   =>  \$sig_q,
     "qvalue"    =>  \$qvalue,
-    "nobest"  =>  \$nobest,
+    "nobest"    =>  \$nobest,
+    "genename"  =>  \$genename,
     "debug"     =>  \$debug,
     "verbose"   =>  \$verbose,
     "help"      =>  \$help,
@@ -59,6 +60,7 @@ say <<HELP;
     "sig_q:f" minimum Q-value to be significant - default = 0.05
     "qvalue" print Q-value in output
     "nobest" don't pick best data for each gene
+    "genename"  include gene name instead of gene ID
     "debug"
     "verbose"
     "help"
@@ -96,12 +98,14 @@ if ($debug) {
 #
 # index of relevent fields:
 # 1 gene_id (ie; Ensembl ID)
+# 2 gene name
 # 4 sample_1 name
 # 5 sample_2 name
 # 9 log(value_2/value_1)
 # 12 FDR
 #
 my $gene_id = 1;
+$gene_id = 2 if ($genename);
 my $sample_1 = 4;
 my $sample_2 = 5;
 my $log2ratio = 9;
@@ -109,7 +113,7 @@ my $fdr = 12;
 
 #
 # instantiate a hash to hold the values that will be printed
-# keyed by Ensembl ID
+# keyed by Ensembl ID or Gene Name
 # if a duplicate Ensembl ID is detected, keep the "better" one
 #
 my %ensemblIDs = ();
@@ -129,7 +133,8 @@ for my $inline (<$infile_fh>) {
 
         my $data = [$linevals[$log2ratio], $linevals[$fdr]];
 
-        if ($linevals[$gene_id] =~ /ENS/) {
+        #if ($linevals[$gene_id] =~ /ENS/) {
+        if ($linevals[$gene_id] && $linevals[$gene_id] ne '-') {
             my $ensemblID = $linevals[$gene_id];
             #say $ensemblID;
             unless ($nobest) {
@@ -142,7 +147,7 @@ for my $inline (<$infile_fh>) {
                     } elsif ($linevals[$fdr] > $sig_q && $ensemblIDs{$ensemblID}->[1] > $sig_q) {
                         # when FDR is > sig_q, usually 0.05, this gene is not differentially expressed
                         # so, save the data with the largest log2ratio
-                        if (abs($linevals[$log2ratio]) > $ensemblIDs{$ensemblID}->[2]) {
+                        if (abs($linevals[$log2ratio]) > $ensemblIDs{$ensemblID}->[0]) {
                             #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4], $linevals[16]];# logFC, FDR, tagwise.dispersion
                             $ensemblIDs{$linevals[5]} = $data;
                         }
