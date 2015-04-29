@@ -67,12 +67,18 @@ for my $file (@ARGV) {
 say STDERR "\@tables contains " . scalar(@tables) . " tables" if ($debug);
 
 my $joined_table;
+my $cnt = 0;
 for (my $tbl = 0; $tbl < scalar(@tables); ++$tbl) {
     my $table = $tables[$tbl];
-    last unless ($tables[++$tbl]);# NOTE: this increments $tbl by 1
+    
     unless ($table->isEmpty()) {
-        # note that $tbl has been incremented outside of loop control statement
-        $joined_table = $table->join($tables[$tbl],Data::Table::FULL_JOIN,['Gene_ID'],['Gene_ID']);
+        ++$cnt;
+        if ($cnt == 1) {
+            # in first iteration of loop, just assign first Data::Table object to $joined_table
+            $joined_table = $table;
+            next;
+        }
+        $joined_table = $joined_table->join($table,Data::Table::FULL_JOIN,['Gene_ID'],['Gene_ID']);
     }
      
 }
