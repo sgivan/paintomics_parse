@@ -78,7 +78,7 @@ for (my $tbl = 0; $tbl < scalar(@tables); ++$tbl) {
             $joined_table = $table;
             next;
         }
-        $joined_table = $joined_table->join($table,Data::Table::FULL_JOIN,['Gene_ID'],['Gene_ID']);
+        $joined_table = $joined_table->join($table,Data::Table::FULL_JOIN,['Gene_ID'],['Gene_ID'],{renameCol=>1});
     }
      
 }
