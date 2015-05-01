@@ -83,5 +83,7 @@ for (my $tbl = 0; $tbl < scalar(@tables); ++$tbl) {
      
 }
 say STDERR "\$joined_table isa '" . ref($joined_table) . "'" if ($debug);
-say $OUT $joined_table->tsv();
+my $output_table = $joined_table->tsv();
+$output_table =~ s/\\N/0/g;
+say $OUT $output_table;
 
