@@ -139,7 +139,7 @@ for my $inline (<$infile_fh>) {
             #say $ensemblID;
             unless ($nobest) {
                 if (exists($ensemblIDs{$ensemblID})) {
-                    say "ensemblIDs{$ensemblID} exists";
+                    say "ensemblIDs{$ensemblID} exists" if ($debug);
                     if ($linevals[$fdr] < $sig_q && ($linevals[$fdr] < $ensemblIDs{$ensemblID}->[1])) {
                         # if FDR of incoming data < what's already stored in hash
                         #$ensemblIDs{$linevals[5]} = [$linevals[1], $linevals[4],$linevals[16]];
